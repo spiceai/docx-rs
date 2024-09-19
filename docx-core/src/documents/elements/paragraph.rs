@@ -2,8 +2,9 @@ use serde::ser::{SerializeStruct, Serializer};
 use serde::Serialize;
 
 use super::*;
+use crate::documents::render::{JsonRender, Render};
 use crate::documents::BuildXML;
-use crate::types::*;
+use crate::{json_render, types::*};
 use crate::xml_builder::*;
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
@@ -26,6 +27,21 @@ impl Default for Paragraph {
     }
 }
 
+impl Render for Paragraph {
+    fn render_ascii_json(&self) -> JsonRender {
+        let children: Vec<u8> = self
+            .children
+            .iter()
+            .flat_map(|c: &ParagraphChild| c.render_ascii())
+            .collect();
+
+        String::from_utf8(children)
+            .map(|ascii| JsonRender{r#type: "Paragraph".to_string(), ascii: children, properties: serde_json::Value::Null})
+            .unwrap_or_default()
+    }
+}
+
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParagraphChild {
     Run(Box<Run>),
@@ -39,6 +55,19 @@ pub enum ParagraphChild {
     StructuredDataTag(Box<StructuredDataTag>),
     PageNum(Box<PageNum>),
     NumPages(Box<NumPages>),
+}
+
+impl Render for ParagraphChild {
+
+    fn render_ascii_json(&self) -> crate::documents::render::JsonRender {
+        match self {
+            ParagraphChild::Run(r) => r.render_ascii_json(),
+            ParagraphChild::Hyperlink(h) => h.render_ascii_json(),
+            _ => {
+                json_render!("ParagraphChild", "")
+            }
+        }
+    }
 }
 
 impl BuildXML for ParagraphChild {

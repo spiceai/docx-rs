@@ -30,6 +30,7 @@ mod paragraph_property_change_id;
 mod pic_id;
 mod preset_styles;
 mod rels;
+mod render;
 mod settings;
 mod styles;
 mod taskpanes;
