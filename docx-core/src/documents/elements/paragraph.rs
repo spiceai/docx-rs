@@ -33,7 +33,7 @@ impl Render for Paragraph {
         // Children must be newline separated.
         let children_ascii: Vec<String> = self.children
             .iter()
-            .map(|c| String::from_utf8_lossy(c.render_ascii().as_bytes()).to_string())
+            .map(|c| String::from_utf8_lossy(&c.render_ascii()).to_string())
             .collect();
         json_render!("Paragraph", children_ascii.join("\n"))
     }
