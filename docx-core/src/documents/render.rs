@@ -28,7 +28,7 @@ pub struct JsonRender {
 #[macro_export]
 macro_rules! json_render {
     ($type:expr, $ascii:expr) => {
-        JsonRender {
+        crate::documents::render::JsonRender {
             r#type: $type.to_string(),
             ascii: $ascii.to_string().as_bytes().to_vec(),
             properties: serde_json::Value::Null,

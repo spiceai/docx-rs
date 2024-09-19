@@ -30,7 +30,7 @@ impl Render for DocumentChild {
     fn render_ascii_json(&self) -> JsonRender {
         match self {
             DocumentChild::Paragraph(v) => v.render_ascii_json(),
-            // DocumentChild::Table(v) => v.render_ascii_json(),
+            DocumentChild::Table(v) => v.render_ascii_json(),
             _ => json_render!("DocumentChild", ""),
         }
     }

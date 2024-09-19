@@ -2,7 +2,7 @@ use serde::ser::{SerializeStruct, Serializer};
 use serde::Serialize;
 
 use super::{Delete, Insert, TableCell, TableRowProperty};
-use crate::xml_builder::*;
+use crate::{json_render, xml_builder::*, Render};
 use crate::{documents::BuildXML, HeightRule};
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -13,9 +13,44 @@ pub struct TableRow {
     pub property: TableRowProperty,
 }
 
+impl Render for TableRow {
+    // Each cell in the row has its own newlines. We need to reconcile the ascii rendering of these across all cells.
+    fn render_ascii_json(&self) -> crate::JsonRender {
+        let child_ascii: Vec<Vec<_>> = self.cells.iter()
+            .map(|c| {
+                let raw = String::from_utf8_lossy(&c.render_ascii()).to_string();
+                raw.split("\n").map(String::from).collect::<Vec<_>>()
+            })
+            .collect();
+
+        let Some(max_rows) = child_ascii.iter().map(|c| c.len()).max() else {
+            return json_render!("TableRow", "| |");
+        };
+        
+        // For each cell in row, get the i'th row of the cell, and merge with other cells in the row. 
+        let ascii_rows: Vec<String> = (0..max_rows).map(|i| {
+            let ascii_row = child_ascii.iter().map(|c| c.get(i).cloned().unwrap_or_default()).collect::<Vec<_>>();
+            format!("| {} |", ascii_row.join(" | "))
+        }).collect::<Vec<_>>();
+
+        json_render!("TableRow", ascii_rows.join("\n"))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum TableRowChild {
     TableCell(TableCell),
+}
+
+impl Render for TableRowChild {
+    fn render_ascii_json(&self) -> crate::JsonRender {
+        match self {
+            TableRowChild::TableCell(TableCell { children,.. }) => {
+                let children_ascii: Vec<String> = children.iter().map(|c| String::from_utf8_lossy(&c.render_ascii()).to_string()).collect();
+                json_render!("TableCell", children_ascii.join("\n"))
+            },
+        }
+    }
 }
 
 impl BuildXML for TableRowChild {
@@ -113,6 +148,8 @@ impl Serialize for TableRowChild {
 #[cfg(test)]
 mod tests {
 
+    use crate::{Paragraph, Run};
+
     use super::*;
     #[cfg(test)]
     use pretty_assertions::assert_eq;
@@ -143,5 +180,18 @@ mod tests {
             str::from_utf8(&b).unwrap(),
             r#"<w:tr><w:trPr><w:cantSplit /></w:trPr><w:tc><w:tcPr /><w:p w14:paraId="12345678"><w:pPr><w:rPr /></w:pPr></w:p></w:tc></w:tr>"#
         );
+    }
+
+    #[test]
+    fn test_multi_line_table_row_render() {
+        let row = TableRow::new(vec![
+            TableCell::new().add_paragraph(Paragraph::new().add_run(Run::new().add_text("hello").add_text("twice"))),
+            TableCell::new().add_paragraph(Paragraph::new().add_run(Run::new().add_text("world"))),
+        ]);
+
+        assert_eq!(
+            String::from_utf8_lossy(&row.render_ascii()),
+            "| hello | world |\n| twice |  |"
+        )
     }
 }

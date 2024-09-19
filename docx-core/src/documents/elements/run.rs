@@ -26,10 +26,10 @@ impl Default for Run {
 }
 impl Render for Run {
     fn render_ascii_json(&self) -> crate::documents::render::JsonRender {
-        let ascii: Vec<u8> = self.children.iter().flat_map(|c| c.render_ascii()).collect();
+        let ascii: Vec<_> = self.children.iter().map(|c| String::from_utf8_lossy(&c.render_ascii()).to_string()).collect();
         JsonRender {
             r#type: "Run".to_string(),
-            ascii,
+            ascii: ascii.join("\n").into(),
             properties: serde_json::Value::Null,
         }
     }
