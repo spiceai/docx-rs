@@ -4,7 +4,7 @@ use serde::Serialize;
 use super::*;
 use crate::documents::render::{JsonRender, Render};
 use crate::documents::BuildXML;
-use crate::{json_render, types::*};
+use crate::{json_render, render_children, types::*};
 use crate::xml_builder::*;
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
@@ -29,16 +29,9 @@ impl Default for Paragraph {
 
 impl Render for Paragraph {
     fn render_ascii_json(&self) -> JsonRender {
-
-        // Children must be newline separated.
-        let children_ascii: Vec<String> = self.children
-            .iter()
-            .map(|c| String::from_utf8_lossy(&c.render_ascii()).to_string())
-            .collect();
-        json_render!("Paragraph", children_ascii.join("\n"))
+        render_children(&self.children, "Paragraph", &serde_json::Value::Null)
     }
 }
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParagraphChild {
