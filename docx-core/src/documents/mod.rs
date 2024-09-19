@@ -70,6 +70,7 @@ pub use header_id::*;
 pub use header_rels::*;
 pub use numberings::*;
 pub use rels::*;
+pub use render::*;
 pub use settings::*;
 pub use styles::*;
 pub use taskpanes::*;
