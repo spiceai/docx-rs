@@ -1,9 +1,10 @@
+use render::{render_children, JsonRender, Render};
 use serde::ser::{SerializeStruct, Serializer};
 use serde::Serialize;
 
 use super::*;
 use crate::documents::BuildXML;
-use crate::xml_builder::*;
+use crate::{json_render, xml_builder::*};
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -23,6 +24,16 @@ pub enum DocumentChild {
     CommentEnd(CommentRangeEnd),
     StructuredDataTag(Box<StructuredDataTag>),
     TableOfContents(Box<TableOfContents>),
+}
+
+impl Render for DocumentChild {
+    fn render_ascii_json(&self) -> JsonRender {
+        match self {
+            DocumentChild::Paragraph(v) => v.render_ascii_json(),
+            // DocumentChild::Table(v) => v.render_ascii_json(),
+            _ => json_render!("DocumentChild", ""),
+        }
+    }
 }
 
 impl Serialize for DocumentChild {
@@ -232,6 +243,12 @@ impl Document {
     pub fn page_num_type(mut self, p: PageNumType) -> Self {
         self.section_property = self.section_property.page_num_type(p);
         self
+    }
+}
+
+impl Render for Document {
+    fn render_ascii_json(&self) -> JsonRender {
+        render_children(&self.children, "Document", &serde_json::Value::Null)
     }
 }
 

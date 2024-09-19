@@ -2,7 +2,7 @@ use serde::ser::{SerializeStruct, Serializer};
 use serde::Serialize;
 
 use super::*;
-use crate::documents::render::{JsonRender, Render};
+use crate::documents::render::{render_children, JsonRender, Render};
 use crate::documents::BuildXML;
 use crate::{json_render, types::*};
 use crate::xml_builder::*;
@@ -29,15 +29,7 @@ impl Default for Paragraph {
 
 impl Render for Paragraph {
     fn render_ascii_json(&self) -> JsonRender {
-        let children: Vec<u8> = self
-            .children
-            .iter()
-            .flat_map(|c: &ParagraphChild| c.render_ascii())
-            .collect();
-
-        String::from_utf8(children)
-            .map(|ascii| JsonRender{r#type: "Paragraph".to_string(), ascii: children, properties: serde_json::Value::Null})
-            .unwrap_or_default()
+        render_children(&self.children, "Paragraph", &serde_json::Value::Null)
     }
 }
 

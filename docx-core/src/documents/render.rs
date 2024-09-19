@@ -35,3 +35,18 @@ macro_rules! json_render {
         }
     };
 }
+
+/// Shorthand to make a [`JsonRender`] with properties for a component with children that implement [`Render`].
+/// Does not include children properties in the resultant [`JsonRender`].
+pub fn render_children<T: Render>(children: &[T], r#type: &str, properties: &serde_json::Value) -> JsonRender {
+    let children_ascii: Vec<u8> = children
+        .iter()
+        .flat_map(|c| c.render_ascii())
+        .collect();
+
+    JsonRender {
+        r#type: r#type.to_string(),
+        ascii: children_ascii,
+        properties: properties.clone(),
+    }
+}
