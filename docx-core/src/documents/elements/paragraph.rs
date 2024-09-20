@@ -29,7 +29,7 @@ impl Default for Paragraph {
 
 impl Render for Paragraph {
     fn render_ascii_json(&self) -> JsonRender {
-        render_children(&self.children, "Paragraph", &serde_json::Value::Null)
+        render_children(&self.children, "", "Paragraph", &serde_json::Value::Null)
     }
 }
 

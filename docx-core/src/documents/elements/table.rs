@@ -123,7 +123,7 @@ impl Table {
 
 impl Render for Table {
     fn render_ascii_json(&self) -> crate::JsonRender {
-        let children: Vec<String> = self.rows.iter().map(|c| match &c {&TableChild::TableRow(r) => String::from_utf8_lossy(&r.render_ascii()).to_string()}).collect();
+        let children: Vec<String> = self.rows.iter().map(|c| match &c {&TableChild::TableRow(r) => r.render_ascii()}).collect();
         let table_breaks: Vec<String> = children.iter().map(|c| "-".repeat(c.split('\n').map(|cc| cc.len()).max().unwrap_or_default())).collect();
         
         let interwoven: Vec<String> = children.into_iter()
@@ -223,7 +223,7 @@ mod tests {
         ]);
 
         assert_eq!(
-            String::from_utf8_lossy(&table.render_ascii()),
+            table.render_ascii(),
             "| hello | world |\n-----------------\n| foo | bar |\n-------------"
         )
     }
@@ -241,7 +241,7 @@ mod tests {
         ]);
 
         assert_eq!(
-            String::from_utf8_lossy(&table.render_ascii()),
+            table.render_ascii(),
             "| hello | world |\n| twice |  |\n-----------------\n| foo | bar |\n-------------"
         )
     }

@@ -2,7 +2,7 @@ use serde::ser::{SerializeStruct, Serializer};
 use serde::Serialize;
 
 use super::{Delete, Insert, TableCell, TableRowProperty};
-use crate::{json_render, xml_builder::*, Render};
+use crate::{json_render, render_children, xml_builder::*, Render, TableCellContent};
 use crate::{documents::BuildXML, HeightRule};
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -18,8 +18,7 @@ impl Render for TableRow {
     fn render_ascii_json(&self) -> crate::JsonRender {
         let child_ascii: Vec<Vec<_>> = self.cells.iter()
             .map(|c| {
-                let raw = String::from_utf8_lossy(&c.render_ascii()).to_string();
-                raw.split("\n").map(String::from).collect::<Vec<_>>()
+                c.render_ascii().split("\n").map(String::from).collect::<Vec<_>>()
             })
             .collect();
 
@@ -46,8 +45,7 @@ impl Render for TableRowChild {
     fn render_ascii_json(&self) -> crate::JsonRender {
         match self {
             TableRowChild::TableCell(TableCell { children,.. }) => {
-                let children_ascii: Vec<String> = children.iter().map(|c| String::from_utf8_lossy(&c.render_ascii()).to_string()).collect();
-                json_render!("TableCell", children_ascii.join("\n"))
+                render_children(children, "\n", "TableCell", &serde_json::Value::Null)
             },
         }
     }
@@ -190,7 +188,7 @@ mod tests {
         ]);
 
         assert_eq!(
-            String::from_utf8_lossy(&row.render_ascii()),
+            row.render_ascii(),
             "| hello | world |\n| twice |  |"
         )
     }

@@ -252,7 +252,7 @@ impl Render for Document {
         // Children must be newline separated.
         let children_ascii: Vec<String> = self.children
             .iter()
-            .map(|c| String::from_utf8_lossy(&c.render_ascii()).to_string())
+            .map(DocumentChild::render_ascii)
             .collect();
         json_render!("Document", children_ascii.join("\n"))
     }

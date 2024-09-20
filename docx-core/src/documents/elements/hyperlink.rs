@@ -4,7 +4,7 @@ use super::*;
 use crate::documents::render::{JsonRender, Render};
 use crate::documents::BuildXML;
 use crate::escape::escape;
-use crate::{json_render, types::*};
+use crate::{json_render, render_children, types::*};
 use crate::{create_hyperlink_rid, generate_hyperlink_id, xml_builder::*};
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
@@ -99,14 +99,14 @@ impl Hyperlink {
 }
 impl Render for Hyperlink {
     fn render_ascii_json(&self) -> JsonRender {
-        let children_ascii: Vec<u8> = self.children.iter().flat_map(|c| c.render_ascii()).collect();
         let link = match self.link {
             HyperlinkData::Anchor { ref anchor } => format!("#{}", anchor),
             HyperlinkData::External { ref path, .. } => path.clone(),
         };
-        String::from_utf8(children_ascii)
-            .map(|ascii| json_render!("Hyperlink", format!("[{ascii}]({link})")))
-            .unwrap_or_default()
+
+        let mut r = render_children(&self.children, "", "Hyperlink", &serde_json::Value::Null);
+        r.ascii = format!("[{}]({})", r.ascii, link);
+        r
     }
 }
 

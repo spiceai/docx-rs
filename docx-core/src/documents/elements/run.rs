@@ -2,10 +2,9 @@ use super::*;
 use serde::ser::{SerializeStruct, Serializer};
 use serde::Serialize;
 
-use crate::documents::render::JsonRender;
 use crate::{documents::render::Render, json_render};
 use crate::documents::BuildXML;
-use crate::types::*;
+use crate::{render_children, types::*};
 use crate::xml_builder::*;
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
@@ -26,12 +25,7 @@ impl Default for Run {
 }
 impl Render for Run {
     fn render_ascii_json(&self) -> crate::documents::render::JsonRender {
-        let ascii: Vec<_> = self.children.iter().map(|c| String::from_utf8_lossy(&c.render_ascii()).to_string()).collect();
-        JsonRender {
-            r#type: "Run".to_string(),
-            ascii: ascii.join("\n").into(),
-            properties: serde_json::Value::Null,
-        }
+        render_children(&self.children, "\n", "Run", &serde_json::Value::Null)
     }
 }
 
