@@ -60,9 +60,9 @@ impl Render for RunChild {
         match self {
             RunChild::Text(Text{text,..}) => json_render!("RunText", text),
             RunChild::Sym(Sym{char,..}) => json_render!("RunSym", char),
-            RunChild::DeleteText(d) => json_render!("RunDeleteText", ""),
+            RunChild::DeleteText(_) => json_render!("RunDeleteText", ""),
             RunChild::Tab(_) => json_render!("RunTab", '\t'),
-            RunChild::Break(b) => json_render!("RunBreak", '\n'),
+            RunChild::Break(_) => json_render!("RunBreak", '\n'),
 
             // TODO: Implement for remaining types
             _ => json_render!("RunChild", ""),
