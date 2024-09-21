@@ -3,7 +3,7 @@ use serde::Serialize;
 
 use super::*;
 use crate::documents::BuildXML;
-use crate::types::*;
+use crate::{json_render, types::*, JsonRender, Render};
 use crate::xml_builder::*;
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
@@ -20,6 +20,16 @@ pub enum TableCellContent {
     Table(Table),
     StructuredDataTag(Box<StructuredDataTag>),
     TableOfContents(Box<TableOfContents>),
+}
+
+impl Render for TableCellContent {
+    fn render_ascii_json(&self) -> JsonRender {
+        match self {
+            TableCellContent::Paragraph(p) => p.render_ascii_json(),
+            TableCellContent::Table(t) => t.render_ascii_json(),
+            _ => json_render!("TableCellContent", ""),
+        }
+    }
 }
 
 impl Serialize for TableCellContent {

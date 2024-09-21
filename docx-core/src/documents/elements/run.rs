@@ -2,8 +2,9 @@ use super::*;
 use serde::ser::{SerializeStruct, Serializer};
 use serde::Serialize;
 
+use crate::{documents::render::Render, json_render};
 use crate::documents::BuildXML;
-use crate::types::*;
+use crate::{render_children, types::*};
 use crate::xml_builder::*;
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
@@ -20,6 +21,11 @@ impl Default for Run {
             run_property,
             children: vec![],
         }
+    }
+}
+impl Render for Run {
+    fn render_ascii_json(&self) -> crate::documents::render::JsonRender {
+        render_children(&self.children, "\n", "Run", &serde_json::Value::Null)
     }
 }
 
@@ -41,6 +47,21 @@ pub enum RunChild {
     InstrTextString(String),
     FootnoteReference(FootnoteReference),
     Shading(Shading),
+}
+
+impl Render for RunChild {
+    fn render_ascii_json(&self) -> crate::documents::render::JsonRender {
+        match self {
+            RunChild::Text(Text{text,..}) => json_render!("RunText", text),
+            RunChild::Sym(Sym{char,..}) => json_render!("RunSym", char),
+            RunChild::DeleteText(_) => json_render!("RunDeleteText", ""),
+            RunChild::Tab(_) => json_render!("RunTab", '\t'),
+            RunChild::Break(_) => json_render!("RunBreak", '\n'),
+
+            // TODO: Implement for remaining types
+            _ => json_render!("RunChild", ""),
+        }
+    }
 }
 
 impl Serialize for RunChild {

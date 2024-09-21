@@ -1,9 +1,10 @@
 use serde::Serialize;
 
 use super::*;
+use crate::documents::render::{JsonRender, Render};
 use crate::documents::BuildXML;
 use crate::escape::escape;
-use crate::types::*;
+use crate::{json_render, render_children, types::*};
 use crate::{create_hyperlink_rid, generate_hyperlink_id, xml_builder::*};
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
@@ -94,6 +95,18 @@ impl Hyperlink {
         self.children
             .push(ParagraphChild::CommentEnd(CommentRangeEnd::new(id)));
         self
+    }
+}
+impl Render for Hyperlink {
+    fn render_ascii_json(&self) -> JsonRender {
+        let link = match self.link {
+            HyperlinkData::Anchor { ref anchor } => format!("#{}", anchor),
+            HyperlinkData::External { ref path, .. } => path.clone(),
+        };
+
+        let mut r = render_children(&self.children, "", "Hyperlink", &serde_json::Value::Null);
+        r.ascii = format!("[{}]({})", r.ascii, link);
+        r
     }
 }
 

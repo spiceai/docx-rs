@@ -3,7 +3,7 @@ use serde::Serialize;
 
 use super::*;
 use crate::documents::BuildXML;
-use crate::types::*;
+use crate::{json_render, types::*, Render};
 use crate::xml_builder::*;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -121,6 +121,20 @@ impl Table {
     }
 }
 
+impl Render for Table {
+    fn render_ascii_json(&self) -> crate::JsonRender {
+        let children: Vec<String> = self.rows.iter().map(|c| match &c {&TableChild::TableRow(r) => r.render_ascii()}).collect();
+        let table_breaks: Vec<String> = children.iter().map(|c| "-".repeat(c.split('\n').map(|cc| cc.len()).max().unwrap_or_default())).collect();
+        
+        let interwoven: Vec<String> = children.into_iter()
+            .zip(table_breaks.into_iter())
+            .flat_map(|(child, table_break)| vec![child, table_break])
+            .collect();
+
+        json_render!("Table", interwoven.join("\n"))
+    }
+}
+
 impl BuildXML for Table {
     fn build(&self) -> Vec<u8> {
         let grid = TableGrid::new(self.grid.clone());
@@ -193,5 +207,42 @@ mod tests {
             serde_json::to_string(&t).unwrap(),
             r#"{"rows":[],"grid":[100,200,300],"hasNumbering":false,"property":{"width":{"width":0,"widthType":"auto"},"justification":"left","borders":{"top":{"borderType":"single","size":2,"color":"000000","position":"top","space":0},"left":{"borderType":"single","size":2,"color":"000000","position":"left","space":0},"bottom":{"borderType":"single","size":2,"color":"000000","position":"bottom","space":0},"right":{"borderType":"single","size":2,"color":"000000","position":"right","space":0},"insideH":{"borderType":"single","size":2,"color":"000000","position":"insideH","space":0},"insideV":{"borderType":"single","size":2,"color":"000000","position":"insideV","space":0}}}}"#
         );
+    }
+
+    #[test]
+    fn test_simple_table_render() {
+        let table = Table::new(vec![
+            TableRow::new(vec![
+                TableCell::new().add_paragraph(Paragraph::new().add_run(Run::new().add_text("hello"))),
+                TableCell::new().add_paragraph(Paragraph::new().add_run(Run::new().add_text("world"))),
+            ]),
+            TableRow::new(vec![
+                TableCell::new().add_paragraph(Paragraph::new().add_run(Run::new().add_text("foo"))),
+                TableCell::new().add_paragraph(Paragraph::new().add_run(Run::new().add_text("bar"))),
+            ]),
+        ]);
+
+        assert_eq!(
+            table.render_ascii(),
+            "| hello | world |\n-----------------\n| foo | bar |\n-------------"
+        )
+    }
+    #[test]
+    fn test_multi_line_table_render() {
+        let table = Table::new(vec![
+            TableRow::new(vec![
+                TableCell::new().add_paragraph(Paragraph::new().add_run(Run::new().add_text("hello").add_text("twice"))),
+                TableCell::new().add_paragraph(Paragraph::new().add_run(Run::new().add_text("world"))),
+            ]),
+            TableRow::new(vec![
+                TableCell::new().add_paragraph(Paragraph::new().add_run(Run::new().add_text("foo"))),
+                TableCell::new().add_paragraph(Paragraph::new().add_run(Run::new().add_text("bar"))),
+            ]),
+        ]);
+
+        assert_eq!(
+            table.render_ascii(),
+            "| hello | world |\n| twice |  |\n-----------------\n| foo | bar |\n-------------"
+        )
     }
 }
